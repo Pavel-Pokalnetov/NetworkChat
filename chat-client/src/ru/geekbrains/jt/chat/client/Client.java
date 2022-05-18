@@ -119,9 +119,6 @@ public class Client extends JFrame implements ActionListener, Thread.UncaughtExc
         }
     }
 
-    private void registrationNewLogin(){
-
-    }
     private void connect() {
         try {
             Socket socket = new Socket(tfIPAddress.getText(), Integer.parseInt(tfPort.getText()));
@@ -157,11 +154,13 @@ public class Client extends JFrame implements ActionListener, Thread.UncaughtExc
         if(cbMsgForAllUsers.isSelected()){
             //шлем BROADCAST
              _message = Messages.getTypeBcastFromClient(msg);
+            putLog(nickName+" > Всем: "+msg);
         }else {
             //шлем UNICAST
             String username = userList.getSelectedValue();
             if(nickName.equals(username))return;
             _message = Messages.getMsgUnicast(username,msg);
+            putLog(nickName+" > "+username+": "+msg);
         }
         System.out.println(_message);
         socketThread.sendMessage(_message);

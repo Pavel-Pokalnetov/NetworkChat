@@ -175,15 +175,14 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
         }
     }
     private  void sendToUser(String desClient, String msg){
-        System.out.println(desClient+"||"+msg);
         for (int i = 0; i < clients.size(); i++) {
             ClientThread client =  (ClientThread) clients.get(i);
             if (client.getNickname().equals(desClient)){
                 client.sendMessage(msg);
                 return;
             }
-            return;
         }
+        return;
     }
 
     private void handleNonAuthMsg(ClientThread client, String msg) {
