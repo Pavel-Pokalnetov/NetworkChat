@@ -11,6 +11,7 @@ import java.awt.event.ActionListener;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.Socket;
+import java.sql.Array;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -22,11 +23,13 @@ public class Client extends JFrame implements ActionListener, Thread.UncaughtExc
     private static final String TITLE = "Chat Client";
     private final JTextArea log = new JTextArea();
 
-    private final JPanel panelTop = new JPanel(new GridLayout(3, 3));
+    private final JPanel panelTop = new JPanel(new GridLayout(2, 4));
     private final JTextField tfIPAddress = new JTextField("127.0.0.1");
     private final JTextField tfPort = new JTextField("8189");
     private final JCheckBox cbAlwaysOnTop = new JCheckBox("Always on top");
-    private final JTextField tfLogin = new JTextField("ivan-igorevich");
+
+    private final JTextField tfNickname = new JTextField("RedX");
+    private final JTextField tfLogin = new JTextField("RedX");
     private final JPasswordField tfPassword = new JPasswordField("123");
     private final JButton btnLogin = new JButton("Login");
     private final JButton btnRegister = new JButton("Register");
@@ -36,6 +39,7 @@ public class Client extends JFrame implements ActionListener, Thread.UncaughtExc
     private final JButton btnDisconnect = new JButton("Disconnect");
     private final JTextField tfMessage = new JTextField();
     private final JButton btnSend = new JButton("<html><b>Send</b></html>");
+    private final JCheckBox cbMsgForAllUsers = new JCheckBox("For all");
     private final JList<String> userList = new JList<>();
 
     private boolean shownIoErrors = false;
@@ -66,6 +70,7 @@ public class Client extends JFrame implements ActionListener, Thread.UncaughtExc
         panelTop.add(tfIPAddress);
         panelTop.add(tfPort);
         panelTop.add(cbAlwaysOnTop);
+        panelTop.add(tfNickname);
         panelTop.add(tfLogin);
         panelTop.add(tfPassword);
         panelTop.add(btnLogin);
@@ -73,6 +78,7 @@ public class Client extends JFrame implements ActionListener, Thread.UncaughtExc
         panelBottom.add(btnDisconnect, BorderLayout.WEST);
         panelBottom.add(tfMessage, BorderLayout.CENTER);
         panelBottom.add(btnSend, BorderLayout.EAST);
+        panelBottom.add(cbMsgForAllUsers,BorderLayout.NORTH);
 
 
         add(panelBottom, BorderLayout.SOUTH);
@@ -126,13 +132,9 @@ public class Client extends JFrame implements ActionListener, Thread.UncaughtExc
         String msg = tfMessage.getText();
         String username = tfLogin.getText();
         if ("".equals(msg)) return;
+        socketThread.sendMessage(Messages.getTypeBcastFromClient(msg));
         tfMessage.setText(null);
         tfMessage.grabFocus();
-        socketThread.sendMessage(Messages.getTypeBcastFromClient(msg));
-    }
-
-    private void getRegistration(String nickName, String login, String password){
-
     }
 
     private void wrtMsgToLogFile(String msg, String username) {
@@ -159,6 +161,7 @@ public class Client extends JFrame implements ActionListener, Thread.UncaughtExc
     }
 
     private void showException(Thread t, Throwable e) {
+        if (!shownIoErrors)return;
         String msg;
         StackTraceElement[] ste = e.getStackTrace();
         if (ste.length == 0)
@@ -193,10 +196,19 @@ public class Client extends JFrame implements ActionListener, Thread.UncaughtExc
     @Override
     public void onSocketReady(SocketThread t, Socket socket) {
         if (isRegistration){
+            isRegistration=false;
             //регистрируемся новым логин паролем
             String login = tfLogin.getText();
-            String nickname = login;
+            String nickname = tfNickname.getText();
+            if (nickname.isEmpty()){
+                putLog("Enter Nickname");
+                return;
+            }
             String pass = new String(tfPassword.getPassword());
+            if (pass.isEmpty() || pass.isBlank()) {
+                putLog("Password is invalid. Must not be empty.");
+                return;
+            }
             t.sendMessage((Messages.getRegistrationMessage(login,pass)));
             return;
         }
@@ -218,7 +230,10 @@ public class Client extends JFrame implements ActionListener, Thread.UncaughtExc
 //        putLog(msgType);
         switch (msgType) {
             case Messages.REGISTRATION_OK:
+                panelBottom.setVisible(true);
+                panelTop.setVisible(false);
                 isRegistration=false;
+                break;
             case Messages.AUTH_ACCEPT:
                 setTitle(TITLE + " logged in as: " + arr[1]);
                 break;
@@ -249,6 +264,6 @@ public class Client extends JFrame implements ActionListener, Thread.UncaughtExc
 
     @Override
     public void onSocketException(SocketThread t, Throwable e) {
-        showException(t, e);
+         showException(t, e);
     }
 }

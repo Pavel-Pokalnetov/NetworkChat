@@ -166,6 +166,8 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
                 client.sendMessage(Messages.getSrvUnicast("You are registered!"));
                 client.sendMessage(Messages.getSrvUnicast("login: "+login));
                 client.sendMessage(Messages.getSrvUnicast("password: "+password));
+                client.sendMessage(Messages.getSrvUnicast("You can connect with a new login now"));
+                client.reconnect();
                 return;
             } else {
                 client.sendMessage(Messages.getSrvUnicast("Registration failed"));
@@ -186,6 +188,7 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
         if (nickname == null) {
             putLog("Invalid login attempt " + login);
             client.authFail();
+            client.reconnect();
             return;
         } else {
             ClientThread oldClient = findClientByNickname(nickname);

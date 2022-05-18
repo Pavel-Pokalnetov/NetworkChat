@@ -24,7 +24,7 @@ public class Messages {
 
 
     public static String getUserList(String users) {
-        return USER_LIST + DELIMITER + users;
+        return USER_LIST +DELIMITER + users;
     }
 
     public static String getAuthRequest(String login, String password) {

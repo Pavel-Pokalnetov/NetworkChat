@@ -47,7 +47,7 @@ public class SqlClient {
        }
    }
    synchronized static boolean addLogin(String nickname, String login, String password){
-        /* добавление пары  login,password в базу данных
+        /* добавление nickname,login,password в базу данных
         String query = String.format("INSERT INTO users (login,password,nickname) VALUES ('%s','%s','%s')",login,password,nickname);
         */
         String query = String.format("INSERT INTO users (login,password,nickname) VALUES ('%s','%s','%s')",login,password,nickname);
