@@ -52,13 +52,13 @@ public class Messages {
         return getMsgUnicast("SERVER",message);
     }
 
-    public static String getMsgUnicast(String src,String message){
+    public static String getMsgUnicast( String dst,String message){
         return UNICAST + DELIMITER + System.currentTimeMillis() +
-    DELIMITER + src + DELIMITER + message;
+    DELIMITER + dst + DELIMITER + message;
     }
 
-    public static String getRegistrationMessage(String login, String password){
-        return  REGISTRATION+DELIMITER+login+DELIMITER+login+DELIMITER+password;
+    public static String getRegistrationMessage(String nickname, String login, String password){
+        return  REGISTRATION+DELIMITER+nickname+DELIMITER+login+DELIMITER+password;
     }
 
 

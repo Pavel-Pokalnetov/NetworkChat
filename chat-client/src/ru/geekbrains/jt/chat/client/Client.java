@@ -44,6 +44,7 @@ public class Client extends JFrame implements ActionListener, Thread.UncaughtExc
 
     private boolean shownIoErrors = false;
     private SocketThread socketThread;
+    private String nickName;
 
     private boolean isRegistration = false;
 
@@ -129,13 +130,23 @@ public class Client extends JFrame implements ActionListener, Thread.UncaughtExc
         }
     }
     private void sendMessage() {
+        String _message;
         String msg = tfMessage.getText();
-        String username = tfLogin.getText();
         if ("".equals(msg)) return;
-        socketThread.sendMessage(Messages.getTypeBcastFromClient(msg));
+        if(cbMsgForAllUsers.isSelected()){
+            //шлем BROADCAST
+             _message = Messages.getTypeBcastFromClient(msg);
+        }else {
+            //шлем UNICAST
+            String username = userList.getSelectedValue();
+            if(nickName.equals(username))return;
+            _message = Messages.getMsgUnicast(username,msg);
+        }
+        System.out.println(_message);
+        socketThread.sendMessage(_message);
         tfMessage.setText(null);
         tfMessage.grabFocus();
-    }
+}
 
     private void wrtMsgToLogFile(String msg, String username) {
         try (FileWriter out = new FileWriter("log.txt", true)) {
@@ -201,15 +212,15 @@ public class Client extends JFrame implements ActionListener, Thread.UncaughtExc
             String login = tfLogin.getText();
             String nickname = tfNickname.getText();
             if (nickname.isEmpty()){
-                putLog("Enter Nickname");
+                putLog("Укажите никнейм");
                 return;
             }
             String pass = new String(tfPassword.getPassword());
             if (pass.isEmpty() || pass.isBlank()) {
-                putLog("Password is invalid. Must not be empty.");
+                putLog("пароль не может быть пустым");
                 return;
             }
-            t.sendMessage((Messages.getRegistrationMessage(login,pass)));
+            t.sendMessage((Messages.getRegistrationMessage(nickname,login,pass )));
             return;
         }
         panelBottom.setVisible(true);
@@ -236,6 +247,7 @@ public class Client extends JFrame implements ActionListener, Thread.UncaughtExc
                 break;
             case Messages.AUTH_ACCEPT:
                 setTitle(TITLE + " logged in as: " + arr[1]);
+                nickName = arr[1];
                 break;
             case Messages.AUTH_DENY:
                 putLog("Не верный логин или пароль.");

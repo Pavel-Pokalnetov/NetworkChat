@@ -128,6 +128,9 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
         String[] arr = msg.split(Messages.DELIMITER);
         String msgType = arr[0];
         switch (msgType) {
+            case Messages.UNICAST:
+                sendToUser(arr[2],Messages.getMsgUnicast(client.getNickname(),arr[3]));
+                break;
             case Messages.USER_BROADCAST:
                 sendToAllAuthorized(Messages.getTypeBroadcast(client.getNickname(), arr[1]));
                 break;
@@ -141,6 +144,17 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
             ClientThread client = (ClientThread) clients.get(i);
             if (!client.isAuthorized()) continue;
             client.sendMessage(msg);
+        }
+    }
+    private  void sendToUser(String desClient, String msg){
+        System.out.println(desClient+"||"+msg);
+        for (int i = 0; i < clients.size(); i++) {
+            ClientThread client =  (ClientThread) clients.get(i);
+            if (client.getNickname().equals(desClient)){
+                client.sendMessage(msg);
+                return;
+            }
+            return;
         }
     }
 
