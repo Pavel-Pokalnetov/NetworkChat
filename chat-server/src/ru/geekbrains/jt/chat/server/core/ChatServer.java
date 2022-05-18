@@ -146,10 +146,38 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
 
     private void handleNonAuthMsg(ClientThread client, String msg) {
         String[] arr = msg.split(Messages.DELIMITER);
+        if (arr.length == 4 & arr[0].equals(Messages.REGISTRATION)){
+            //регистрация нового клиента
+            String nickname=arr[1];
+            String login=arr[2];
+            if (SqlClient.checkLogin(login)){
+                //login уже занят
+                client.sendMessage(Messages.getSrvUnicast("This login is already occupied"));
+                return;
+            }
+            String password=arr[3];
+            if (password.equals("")){
+                client.sendMessage(Messages.getSrvUnicast("the password cannot be empty"));
+                return;
+            }
+            if (SqlClient.addLogin(nickname,login,password)){
+                client.authAccept(nickname);
+                client.sendMessage(Messages.getSrvUnicast("You are registered!"));
+                client.sendMessage(Messages.getSrvUnicast("login: "+login));
+                client.sendMessage(Messages.getSrvUnicast("password: "+password));
+                return;
+            } else {
+                client.sendMessage(Messages.getSrvUnicast("Registration failed"));
+            }
+
+
+        }
         if (arr.length != 3 || !arr[0].equals(Messages.AUTH_REQUEST)) {
+            //косячный мессадж
             client.msgFormatError(msg);
             return;
         }
+
         String login = arr[1];
         String password = arr[2];
         String nickname = SqlClient.getNick(login, password);

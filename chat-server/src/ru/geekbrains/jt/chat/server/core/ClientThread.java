@@ -56,11 +56,11 @@ public class ClientThread extends SocketThread {
 
     void authFail() {
         sendMessage(Messages.getAuthDenied());
-        close();
+        //close();
     }
 
     void msgFormatError(String msg) {
         sendMessage(Messages.getMsgFormatError(msg));
-        close();
+        //close();
     }
 }

@@ -118,6 +118,10 @@ public class Client extends JFrame implements ActionListener, Thread.UncaughtExc
         socketThread.sendMessage(Messages.getTypeBcastFromClient(msg));
     }
 
+    private void getRegistration(String nickName, String login, String password){
+
+    }
+
     private void wrtMsgToLogFile(String msg, String username) {
         try (FileWriter out = new FileWriter("log.txt", true)) {
             out.write(username + ": " + msg + "\n");
@@ -196,7 +200,7 @@ public class Client extends JFrame implements ActionListener, Thread.UncaughtExc
                 setTitle(TITLE + " logged in as: " + arr[1]);
                 break;
             case Messages.AUTH_DENY:
-                putLog("1111111111111111111111111");
+                putLog("Не верный логин или пароль.");
                 break;
             case Messages.MSG_FORMAT_ERROR:
                 putLog(value);
@@ -210,9 +214,11 @@ public class Client extends JFrame implements ActionListener, Thread.UncaughtExc
                 userList.setListData(usersArr);
                 break;
             case Messages.MSG_BROADCAST:
+            case Messages.UNICAST:
                 log.append(DATE_FORMAT.format(Long.parseLong(arr[1])) + ": " + arr[2] + ": " + arr[3] + "\n");
                 log.setCaretPosition(log.getDocument().getLength());
                 break;
+
             default:
                 throw new RuntimeException("Unknown message type: " + msgType);
         }

@@ -9,8 +9,9 @@ public class Messages {
     public static final String MSG_FORMAT_ERROR = "/msg_error";
     public static final String USER_LIST = "/user_list";
     public static final String USER_BROADCAST = "/user_bcast";
-
     public static final String REGISTRATION = "/user_reg";
+
+    public static final String UNICAST = "/unicast";
 
 
 
@@ -42,5 +43,10 @@ public class Messages {
     public static String getTypeBroadcast(String src, String message) {
         return MSG_BROADCAST + DELIMITER + System.currentTimeMillis() +
                 DELIMITER + src + DELIMITER + message;
+    }
+
+    public static String getSrvUnicast(String message){
+        return MSG_BROADCAST + DELIMITER + System.currentTimeMillis() +
+                DELIMITER + "SERVER" + DELIMITER + message;
     }
 }

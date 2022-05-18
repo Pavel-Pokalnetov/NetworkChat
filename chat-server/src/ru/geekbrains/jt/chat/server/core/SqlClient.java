@@ -36,15 +36,36 @@ public class SqlClient {
         }
         return null;
     }
-   /* synchronized static boolean addLogin(String nikname, String login, String password){
+
+   synchronized static boolean checkLogin(String login){
+       String query = String.format(
+               "select login from users where login='%s'",login);
+       try (ResultSet set = statement.executeQuery(query)) {
+           return (set.next());
+       } catch (SQLException e) {
+           throw new RuntimeException(e);
+       }
+   }
+   synchronized static boolean addLogin(String nickname, String login, String password){
         /* добавление пары  login,password в базу данных
         String query = String.format("INSERT INTO users (login,password,nickname) VALUES ('%s','%s','%s')",login,password,nickname);
-        *
-        String query = String.format(
-                "select nickname from users where login='%s'",login);
-        try (ResultSet set = statement.executeQuery(query)) {
-            if (set.next())
-
+        */
+        String query = String.format("INSERT INTO users (login,password,nickname) VALUES ('%s','%s','%s')",login,password,nickname);
+        try {
+            statement.executeUpdate(query);
+            return true;
+        } catch (SQLException e) {
+          //  throw new RuntimeException(e);
+            return false;
         }
-    }*/
+
+   }
+
+   static void userRegistration(String login, String password, String nickname){
+        if (!checkLogin(login)){
+            addLogin(nickname,login,password);
+       }
+
+   }
+
 }
