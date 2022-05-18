@@ -11,6 +11,9 @@ public class Messages {
     public static final String USER_BROADCAST = "/user_bcast";
     public static final String REGISTRATION = "/user_reg";
 
+    public static final String REGISTRATION_OK = "/user_reg";
+
+
     public static final String UNICAST = "/unicast";
 
 
@@ -19,7 +22,7 @@ public class Messages {
         return USER_BROADCAST + DELIMITER + msg;
     }
 
-    // /userlist±user1±user2±.....
+
     public static String getUserList(String users) {
         return USER_LIST + DELIMITER + users;
     }
@@ -46,7 +49,17 @@ public class Messages {
     }
 
     public static String getSrvUnicast(String message){
-        return MSG_BROADCAST + DELIMITER + System.currentTimeMillis() +
-                DELIMITER + "SERVER" + DELIMITER + message;
+        return getMsgUnicast("SERVER",message);
     }
+
+    public static String getMsgUnicast(String src,String message){
+        return UNICAST + DELIMITER + System.currentTimeMillis() +
+    DELIMITER + src + DELIMITER + message;
+    }
+
+    public static String getRegistrationMessage(String login, String password){
+        return  REGISTRATION+DELIMITER+login+DELIMITER+login+DELIMITER+password;
+    }
+
+
 }

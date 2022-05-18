@@ -22,13 +22,15 @@ public class Client extends JFrame implements ActionListener, Thread.UncaughtExc
     private static final String TITLE = "Chat Client";
     private final JTextArea log = new JTextArea();
 
-    private final JPanel panelTop = new JPanel(new GridLayout(2, 3));
+    private final JPanel panelTop = new JPanel(new GridLayout(3, 3));
     private final JTextField tfIPAddress = new JTextField("127.0.0.1");
     private final JTextField tfPort = new JTextField("8189");
     private final JCheckBox cbAlwaysOnTop = new JCheckBox("Always on top");
     private final JTextField tfLogin = new JTextField("ivan-igorevich");
     private final JPasswordField tfPassword = new JPasswordField("123");
     private final JButton btnLogin = new JButton("Login");
+    private final JButton btnRegister = new JButton("Register");
+
 
     private final JPanel panelBottom = new JPanel(new BorderLayout());
     private final JButton btnDisconnect = new JButton("Disconnect");
@@ -38,6 +40,8 @@ public class Client extends JFrame implements ActionListener, Thread.UncaughtExc
 
     private boolean shownIoErrors = false;
     private SocketThread socketThread;
+
+    private boolean isRegistration = false;
 
 
     private Client() {
@@ -55,6 +59,7 @@ public class Client extends JFrame implements ActionListener, Thread.UncaughtExc
         btnSend.addActionListener(this);
         tfMessage.addActionListener(this);
         btnLogin.addActionListener(this);
+        btnRegister.addActionListener(this);
         btnDisconnect.addActionListener(this);
         panelBottom.setVisible(false);
 
@@ -64,9 +69,11 @@ public class Client extends JFrame implements ActionListener, Thread.UncaughtExc
         panelTop.add(tfLogin);
         panelTop.add(tfPassword);
         panelTop.add(btnLogin);
+        panelTop.add(btnRegister);
         panelBottom.add(btnDisconnect, BorderLayout.WEST);
         panelBottom.add(tfMessage, BorderLayout.CENTER);
         panelBottom.add(btnSend, BorderLayout.EAST);
+
 
         add(panelBottom, BorderLayout.SOUTH);
         add(panelTop, BorderLayout.NORTH);
@@ -96,11 +103,17 @@ public class Client extends JFrame implements ActionListener, Thread.UncaughtExc
             connect();
         } else if (src == btnDisconnect) {
             socketThread.close();
+        }else if(src==btnRegister){
+            isRegistration=true;
+            connect();
         } else {
             throw new RuntimeException("Action for component unimplemented");
         }
     }
 
+    private void registrationNewLogin(){
+
+    }
     private void connect() {
         try {
             Socket socket = new Socket(tfIPAddress.getText(), Integer.parseInt(tfPort.getText()));
@@ -179,6 +192,14 @@ public class Client extends JFrame implements ActionListener, Thread.UncaughtExc
 
     @Override
     public void onSocketReady(SocketThread t, Socket socket) {
+        if (isRegistration){
+            //регистрируемся новым логин паролем
+            String login = tfLogin.getText();
+            String nickname = login;
+            String pass = new String(tfPassword.getPassword());
+            t.sendMessage((Messages.getRegistrationMessage(login,pass)));
+            return;
+        }
         panelBottom.setVisible(true);
         panelTop.setVisible(false);
         String login = tfLogin.getText();
@@ -194,8 +215,10 @@ public class Client extends JFrame implements ActionListener, Thread.UncaughtExc
     void handleMessage(String value) {
         String[] arr = value.split(Messages.DELIMITER);
         String msgType = arr[0];
-        putLog(msgType);
+//        putLog(msgType);
         switch (msgType) {
+            case Messages.REGISTRATION_OK:
+                isRegistration=false;
             case Messages.AUTH_ACCEPT:
                 setTitle(TITLE + " logged in as: " + arr[1]);
                 break;
@@ -203,8 +226,8 @@ public class Client extends JFrame implements ActionListener, Thread.UncaughtExc
                 putLog("Не верный логин или пароль.");
                 break;
             case Messages.MSG_FORMAT_ERROR:
-                putLog(value);
-                socketThread.close();
+                putLog(value.split("/msg_error§")[1]);
+                //socketThread.close();
                 break;
             case Messages.USER_LIST:
                 String users = value.substring(Messages.DELIMITER.length() +

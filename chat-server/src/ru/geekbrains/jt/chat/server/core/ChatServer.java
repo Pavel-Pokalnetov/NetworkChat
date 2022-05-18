@@ -74,7 +74,7 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
 
     @Override
     public void onServerSoTimeout(ServerSocketThread t, ServerSocket s) {
-        //
+
     }
 
     @Override
@@ -157,10 +157,11 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
             }
             String password=arr[3];
             if (password.equals("")){
-                client.sendMessage(Messages.getSrvUnicast("the password cannot be empty"));
+                client.sendMessage(Messages.getSrvUnicast("The password cannot be empty"));
                 return;
             }
             if (SqlClient.addLogin(nickname,login,password)){
+                client.sendMessage(Messages.REGISTRATION_OK);
                 client.authAccept(nickname);
                 client.sendMessage(Messages.getSrvUnicast("You are registered!"));
                 client.sendMessage(Messages.getSrvUnicast("login: "+login));
@@ -168,6 +169,7 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
                 return;
             } else {
                 client.sendMessage(Messages.getSrvUnicast("Registration failed"));
+                return;
             }
 
 
