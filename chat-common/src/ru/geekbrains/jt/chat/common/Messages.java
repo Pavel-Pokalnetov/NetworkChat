@@ -11,12 +11,19 @@ public class Messages {
     public static final String USER_BROADCAST = "/user_bcast";
     public static final String REGISTRATION = "/user_reg";
 
-    public static final String REGISTRATION_OK = "/user_reg";
+    public static final String REGISTRATION_OK = "/user_reg_ok";
 
-
+    public static final String SETPASSWORD = "/user_set_password";
+    public static final String SETNICK  = "/user_set_nick";
     public static final String UNICAST = "/unicast";
 
+    public static String getMsgSetUserPassword(String login,String password){
+        return SETPASSWORD+DELIMITER+login+DELIMITER+password;
+    }
 
+    public static String getMsgSetUserNickname(String login, String nickname){
+        return  SETNICK+DELIMITER+login+DELIMITER+nickname;
+    }
 
     public static String getTypeBcastFromClient(String msg) {
         return USER_BROADCAST + DELIMITER + msg;

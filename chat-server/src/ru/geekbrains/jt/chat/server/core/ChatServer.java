@@ -128,6 +128,12 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
         String[] arr = msg.split(Messages.DELIMITER);
         String msgType = arr[0];
         switch (msgType) {
+            case Messages.SETPASSWORD:
+                setUserPassword(client,arr[1],arr[2]);
+                break;
+            case Messages.SETNICK:
+                setUserNick(client,arr[1],arr[2]);
+                break;
             case Messages.UNICAST:
                 sendToUser(arr[2],Messages.getMsgUnicast(client.getNickname(),arr[3]));
                 break;
@@ -138,6 +144,28 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
                 client.msgFormatError(msg);
         }
     }
+
+       private void setUserPassword(ClientThread client,String login,String password){
+        //меняем пароль;
+           System.out.println(login+"||"+password);
+        if(SqlClient.setUserPassword(login,password)){
+            client.sendMessage(Messages.getSrvUnicast("пароль успешно изменен"));
+            client.sendMessage(Messages.getSrvUnicast("переподключитесь к серверу с новым паролем"));
+        }else{
+            client.sendMessage(Messages.getSrvUnicast("не удалось изменить пароль"));
+        }
+    }
+
+    private void setUserNick(ClientThread client,String login,String nickname){
+        //меняем ник
+        if(SqlClient.setUserNickName(login,nickname)){
+            client.sendMessage(Messages.getSrvUnicast("ник успешно изменен"));
+            client.sendMessage(Messages.getSrvUnicast("переподключитесь к серверу"));
+        }else{
+            client.sendMessage(Messages.getSrvUnicast("не удалось изменить ник"));
+        }
+    }
+
 
     private void sendToAllAuthorized(String msg) {
         for (int i = 0; i < clients.size(); i++) {
@@ -166,30 +194,31 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
             String login=arr[2];
             if (SqlClient.checkLogin(login)){
                 //login уже занят
-                client.sendMessage(Messages.getSrvUnicast("This login is already occupied"));
+                client.sendMessage(Messages.getSrvUnicast("Этот логин занят"));
                 return;
             }
             String password=arr[3];
             if (password.equals("")){
-                client.sendMessage(Messages.getSrvUnicast("The password cannot be empty"));
+                client.sendMessage(Messages.getSrvUnicast("Пароль не может быть пустым"));
                 return;
             }
             if (SqlClient.addLogin(nickname,login,password)){
                 client.sendMessage(Messages.REGISTRATION_OK);
                 client.authAccept(nickname);
-                client.sendMessage(Messages.getSrvUnicast("You are registered!"));
-                client.sendMessage(Messages.getSrvUnicast("login: "+login));
-                client.sendMessage(Messages.getSrvUnicast("password: "+password));
-                client.sendMessage(Messages.getSrvUnicast("You can connect with a new login now"));
+                client.sendMessage(Messages.getSrvUnicast("Вы зарегистрированы!"));
+                client.sendMessage(Messages.getSrvUnicast("логин: "+login));
+                client.sendMessage(Messages.getSrvUnicast("пароль: "+password));
+                client.sendMessage(Messages.getSrvUnicast("Ва можете авторизоваться под новым логином"));
                 client.reconnect();
                 return;
             } else {
-                client.sendMessage(Messages.getSrvUnicast("Registration failed"));
+                client.sendMessage(Messages.getSrvUnicast("Регистрация не удалась"));
                 return;
             }
 
 
         }
+
         if (arr.length != 3 || !arr[0].equals(Messages.AUTH_REQUEST)) {
             //косячный мессадж
             client.msgFormatError(msg);

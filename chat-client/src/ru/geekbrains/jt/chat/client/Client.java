@@ -47,6 +47,7 @@ public class Client extends JFrame implements ActionListener, Thread.UncaughtExc
     private String nickName;
 
     private boolean isRegistration = false;
+    private boolean isLogin = false;
 
 
     private Client() {
@@ -130,9 +131,29 @@ public class Client extends JFrame implements ActionListener, Thread.UncaughtExc
         }
     }
     private void sendMessage() {
+        if (!isLogin)return;
         String _message;
         String msg = tfMessage.getText();
         if ("".equals(msg)) return;
+        if ("SETNICK".equals(msg.split(":")[0])){
+            //изменение ника
+            if(msg.split(":")[1].isBlank()){
+                putLog("Ник не может быть пустым");
+                return;
+            }
+            setUserNick(msg.split(":")[1]);
+            return;
+        }
+        if("SETPSWD".equals(msg.split(":")[0])){
+            //изменение пароля
+
+            if(msg.split(":")[1].isBlank()){
+                putLog("Пароль не может быть пустым");
+                return;
+            }
+            setUserPassword(msg.split(":")[1]);
+            return;
+        }
         if(cbMsgForAllUsers.isSelected()){
             //шлем BROADCAST
              _message = Messages.getTypeBcastFromClient(msg);
@@ -147,6 +168,15 @@ public class Client extends JFrame implements ActionListener, Thread.UncaughtExc
         tfMessage.setText(null);
         tfMessage.grabFocus();
 }
+
+    private void setUserNick(String s) {
+        socketThread.sendMessage(Messages.getMsgSetUserNickname(tfLogin.getText(),s));
+    }
+
+    private void setUserPassword(String s) {
+
+        socketThread.sendMessage(Messages.getMsgSetUserPassword(tfLogin.getText(),s));
+    }
 
     private void wrtMsgToLogFile(String msg, String username) {
         try (FileWriter out = new FileWriter("log.txt", true)) {
@@ -193,13 +223,14 @@ public class Client extends JFrame implements ActionListener, Thread.UncaughtExc
 
     @Override
     public void onSocketStart(SocketThread t, Socket s) {
-        putLog("Start");
+      //  putLog("Start");
     }
 
     @Override
     public void onSocketStop(SocketThread t) {
         panelBottom.setVisible(false);
         panelTop.setVisible(true);
+        isLogin=false;
         setTitle(TITLE);
         userList.setListData(new String[0]);
     }
@@ -223,6 +254,7 @@ public class Client extends JFrame implements ActionListener, Thread.UncaughtExc
             t.sendMessage((Messages.getRegistrationMessage(nickname,login,pass )));
             return;
         }
+        //здесь просто логин
         panelBottom.setVisible(true);
         panelTop.setVisible(false);
         String login = tfLogin.getText();
@@ -240,6 +272,9 @@ public class Client extends JFrame implements ActionListener, Thread.UncaughtExc
         String msgType = arr[0];
 //        putLog(msgType);
         switch (msgType) {
+            case Messages.SETNICK:
+                setTitle(TITLE + " logged in as: " + arr[2]);
+                break;
             case Messages.REGISTRATION_OK:
                 panelBottom.setVisible(true);
                 panelTop.setVisible(false);
@@ -247,10 +282,13 @@ public class Client extends JFrame implements ActionListener, Thread.UncaughtExc
                 break;
             case Messages.AUTH_ACCEPT:
                 setTitle(TITLE + " logged in as: " + arr[1]);
+                isLogin=true;
+                putLog("Для смены ника/пароля отправьте сообщение\nSETNICK:новое_имя\nSETPSWD:новый_пароль");
                 nickName = arr[1];
                 break;
             case Messages.AUTH_DENY:
                 putLog("Не верный логин или пароль.");
+                isLogin=false;
                 break;
             case Messages.MSG_FORMAT_ERROR:
                 putLog(value.split("/msg_error§")[1]);

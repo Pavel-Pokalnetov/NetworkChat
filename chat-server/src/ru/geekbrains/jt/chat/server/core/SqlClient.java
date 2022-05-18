@@ -60,6 +60,31 @@ public class SqlClient {
         }
 
    }
+   synchronized static boolean setUserNickName(String login,String nickname){
+        if (!checkLogin(login))return false;
+        String query = String.format("UPDATE users SET nickname = '%s'"+
+                "WHERE login = '%s'",nickname,login);
+        try {
+            statement.executeUpdate(query);
+            return true;
+        } catch (SQLException e) {
+           //throw new RuntimeException(e);
+            return false;
+        }
+    }
+   synchronized static boolean setUserPassword(String login,String password){
+        if (!checkLogin(login))return false;
+        String query = String.format("UPDATE users SET password = '%s'"+
+                "WHERE login = '%s'",password,login);
+        try {
+            statement.executeUpdate(query);
+            return true;
+        } catch (SQLException e) {
+           //throw new RuntimeException(e);
+            return false;
+        }
+    }
+
 
    static void userRegistration(String login, String password, String nickname){
         if (!checkLogin(login)){
