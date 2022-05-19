@@ -50,7 +50,7 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
 
     /**
      * Server socket thread methods
-     * */
+     */
 
     @Override
     public void onServerStart(ServerSocketThread thread) {
@@ -79,7 +79,7 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
 
     @Override
     public void onSocketAccepted(ServerSocketThread t, ServerSocket s, Socket client) {
-        putLog("client connected");
+        putLog("Client connected");
         String name = "SocketThread" + client.getInetAddress() + ": " + client.getPort();
         new ClientThread(this, name, client);
     }
@@ -91,7 +91,7 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
 
     /**
      * Socket Thread listening
-     * */
+     */
 
     @Override
     public synchronized void onSocketStart(SocketThread t, Socket s) {
@@ -110,7 +110,7 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
 
     @Override
     public synchronized void onSocketReady(SocketThread t, Socket socket) {
-        putLog("client is ready");
+        putLog("Client is ready");
         clients.add(t);
     }
 
@@ -129,13 +129,13 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
         String msgType = arr[0];
         switch (msgType) {
             case Messages.SETPASSWORD:
-                setUserPassword(client,arr[1],arr[2]);
+                setUserPassword(client, arr[1], arr[2]);
                 break;
             case Messages.SETNICK:
-                setUserNick(client,arr[1],arr[2]);
+                setUserNick(client, arr[1], arr[2]);
                 break;
             case Messages.UNICAST:
-                sendToUser(arr[2],Messages.getMsgUnicast(client.getNickname(),arr[3]));
+                sendToUser(arr[2], Messages.getMsgUnicast(client.getNickname(), arr[3]));
                 break;
             case Messages.USER_BROADCAST:
                 sendToAllAuthorized(Messages.getTypeBroadcast(client.getNickname(), arr[1]));
@@ -145,27 +145,26 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
         }
     }
 
-       private void setUserPassword(ClientThread client,String login,String password){
+    private void setUserPassword(ClientThread client, String login, String password) {
         //меняем пароль;
-           System.out.println(login+"||"+password);
-        if(SqlClient.setUserPassword(login,password)){
+        System.out.println(login + "||" + password);
+        if (SqlClient.setUserPassword(login, password)) {
             client.sendMessage(Messages.getSrvUnicast("пароль успешно изменен"));
             client.sendMessage(Messages.getSrvUnicast("переподключитесь к серверу с новым паролем"));
-        }else{
+        } else {
             client.sendMessage(Messages.getSrvUnicast("не удалось изменить пароль"));
         }
     }
 
-    private void setUserNick(ClientThread client,String login,String nickname){
+    private void setUserNick(ClientThread client, String login, String nickname) {
         //меняем ник
-        if(SqlClient.setUserNickName(login,nickname)){
+        if (SqlClient.setUserNickName(login, nickname)) {
             client.sendMessage(Messages.getSrvUnicast("ник успешно изменен"));
             client.sendMessage(Messages.getSrvUnicast("переподключитесь к серверу"));
-        }else{
+        } else {
             client.sendMessage(Messages.getSrvUnicast("не удалось изменить ник"));
         }
     }
-
 
     private void sendToAllAuthorized(String msg) {
         for (int i = 0; i < clients.size(); i++) {
@@ -174,10 +173,11 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
             client.sendMessage(msg);
         }
     }
-    private  void sendToUser(String desClient, String msg){
+
+    private void sendToUser(String desClient, String msg) {
         for (int i = 0; i < clients.size(); i++) {
-            ClientThread client =  (ClientThread) clients.get(i);
-            if (client.getNickname().equals(desClient)){
+            ClientThread client = (ClientThread) clients.get(i);
+            if (client.getNickname().equals(desClient)) {
                 client.sendMessage(msg);
                 return;
             }
@@ -187,26 +187,27 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
 
     private void handleNonAuthMsg(ClientThread client, String msg) {
         String[] arr = msg.split(Messages.DELIMITER);
-        if (arr.length == 4 & arr[0].equals(Messages.REGISTRATION)){
+        if (arr.length == 4 & arr[0].equals(Messages.REGISTRATION)) {
             //регистрация нового клиента
-            String nickname=arr[1];
-            String login=arr[2];
-            if (SqlClient.checkLogin(login)){
+            String nickname = arr[1];
+            String login = arr[2];
+            if (SqlClient.checkLogin(login)) {
                 //login уже занят
                 client.sendMessage(Messages.getSrvUnicast("Этот логин занят"));
                 return;
             }
-            String password=arr[3];
-            if (password.equals("")){
+            String password = arr[3];
+            if (password.equals("")) {
                 client.sendMessage(Messages.getSrvUnicast("Пароль не может быть пустым"));
                 return;
             }
-            if (SqlClient.addLogin(nickname,login,password)){
+            if (SqlClient.addLogin(nickname, login, password)) {
+                //успешная регистрация нового клиента
                 client.sendMessage(Messages.REGISTRATION_OK);
                 client.authAccept(nickname);
                 client.sendMessage(Messages.getSrvUnicast("Вы зарегистрированы!"));
-                client.sendMessage(Messages.getSrvUnicast("логин: "+login));
-                client.sendMessage(Messages.getSrvUnicast("пароль: "+password));
+                client.sendMessage(Messages.getSrvUnicast("логин: " + login));
+                client.sendMessage(Messages.getSrvUnicast("пароль: " + password));
                 client.sendMessage(Messages.getSrvUnicast("Ва можете авторизоваться под новым логином"));
                 client.reconnect();
                 return;
@@ -214,8 +215,6 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
                 client.sendMessage(Messages.getSrvUnicast("Регистрация не удалась"));
                 return;
             }
-
-
         }
 
         if (arr.length != 3 || !arr[0].equals(Messages.AUTH_REQUEST)) {
@@ -235,7 +234,7 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
         } else {
             ClientThread oldClient = findClientByNickname(nickname);
             client.authAccept(nickname);
-            if (oldClient == null){
+            if (oldClient == null) {
                 sendToAllAuthorized(Messages.getTypeBroadcast("Server", nickname + " connected."));
             } else {
                 oldClient.reconnect();
