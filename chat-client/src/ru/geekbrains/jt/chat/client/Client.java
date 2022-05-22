@@ -8,11 +8,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Client extends JFrame implements ActionListener, Thread.UncaughtExceptionHandler, SocketThreadListener {
@@ -105,12 +105,14 @@ public class Client extends JFrame implements ActionListener, Thread.UncaughtExc
                 panelBottom.setVisible(true);
                 panelTop.setVisible(false);
                 isRegistration = false;
+                putLog("Для смены ника/пароля отправьте сообщение\nSETNICK:новое_имя\nSETPSWD:новый_пароль");
                 break;
             case Messages.AUTH_ACCEPT:
                 setTitle(TITLE + " logged in as: " + arr[1]);
                 isLogin = true;
-                putLog("Для смены ника/пароля отправьте сообщение\nSETNICK:новое_имя\nSETPSWD:новый_пароль");
+                loadLogFromHostory();
                 nickName = arr[1];
+
                 break;
             case Messages.AUTH_DENY:
                 putLog("Не верный логин или пароль.");
@@ -118,7 +120,6 @@ public class Client extends JFrame implements ActionListener, Thread.UncaughtExc
                 break;
             case Messages.MSG_FORMAT_ERROR:
                 putLog(value.split("/msg_error§")[1]);
-                //socketThread.close();
                 break;
             case Messages.USER_LIST:
                 String users = value.substring(Messages.DELIMITER.length() +
@@ -129,8 +130,8 @@ public class Client extends JFrame implements ActionListener, Thread.UncaughtExc
                 break;
             case Messages.MSG_BROADCAST:
             case Messages.UNICAST:
-                log.append(DATE_FORMAT.format(Long.parseLong(arr[1])) + ": " + arr[2] + ": " + arr[3] + "\n");
-                log.setCaretPosition(log.getDocument().getLength());
+                putLog(DATE_FORMAT.format(Long.parseLong(arr[1])) + ":" + arr[2] + " > " + arr[3]);
+                putLogFile(DATE_FORMAT.format(Long.parseLong(arr[1])) + ":" + arr[2] + " > " + arr[3]);
                 break;
             default:
                 throw new RuntimeException("Unknown message type: " + msgType);
@@ -163,15 +164,16 @@ public class Client extends JFrame implements ActionListener, Thread.UncaughtExc
         if (cbMsgForAllUsers.isSelected()) {
             //шлём BROADCAST
             _message = Messages.getTypeBcastFromClient(msg);
-            putLog(nickName + " > Всем: " + msg);
+            putLog(nickName + " > Всем:" + msg);
+            putLogFile(DATE_FORMAT.format(System.currentTimeMillis()) + ":" + tfLogin.getText() + " > Всем:" + msg);
         } else {
             //шлём UNICAST
             String username = userList.getSelectedValue();
             if (nickName.equals(username)) return;
             _message = Messages.getMsgUnicast(username, msg);
             putLog(nickName + " > " + username + ": " + msg);
+            putLogFile(DATE_FORMAT.format(System.currentTimeMillis()) + nickName + "> " + username + ":" + msg);
         }
-       // System.out.println(_message);
         socketThread.sendMessage(_message);
         tfMessage.setText(null);
         tfMessage.grabFocus();
@@ -185,16 +187,37 @@ public class Client extends JFrame implements ActionListener, Thread.UncaughtExc
         socketThread.sendMessage(Messages.getMsgSetUserPassword(tfLogin.getText(), s));
     }
 
-    private void wrtMsgToLogFile(String msg, String username) {
-        try (FileWriter out = new FileWriter("log.txt", true)) {
-            out.write(username + ": " + msg + "\n");
+    private void putLogFile(String msg) {
+        try (FileWriter out = new FileWriter("log_" + tfLogin.getText() + ".txt", true)) {
+            out.write(msg + "\n");
             out.flush();
         } catch (IOException e) {
             if (!shownIoErrors) {
-                shownIoErrors = true;
                 showException(Thread.currentThread(), e);
             }
         }
+    }
+
+    private void loadLogFromHostory() {
+        ArrayList<String> logStringList = new ArrayList<>();
+        String line = "";
+        try (
+                BufferedReader logBufFile = new BufferedReader(new FileReader("log_" + tfLogin.getText() + ".txt"), 4096);) {
+            while ((line = logBufFile.readLine()) != null) {
+                logStringList.add(line);
+            }
+        } catch (FileNotFoundException e) {
+            return;
+        } catch (IOException e) {
+            System.out.println("IO-error:" + e.getMessage() + "\n" + Arrays.toString(e.getStackTrace()));
+            return;
+        }
+        while (logStringList.size() > 100) logStringList.remove(0);
+        log.setText("");
+        for (String logline : logStringList) {
+            log.append(logline + "\n");
+        }
+        log.setCaretPosition(log.getDocument().getLength());
     }
 
     private void putLog(String msg) {
@@ -242,6 +265,7 @@ public class Client extends JFrame implements ActionListener, Thread.UncaughtExc
         } else if (src == btnLogin) {
             connect();
         } else if (src == btnDisconnect) {
+            log.setText("");
             socketThread.close();
         } else if (src == btnRegister) {
             isRegistration = true;
