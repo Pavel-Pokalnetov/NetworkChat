@@ -209,7 +209,7 @@ public class Client extends JFrame implements ActionListener, Thread.UncaughtExc
         } catch (FileNotFoundException e) {
             return;
         } catch (IOException e) {
-            System.out.println("IO-error:"+e.getMessage()+"\n"+ Arrays.toString(e.getStackTrace()));
+            System.out.println("IO-error:" + e.getMessage() + "\n" + Arrays.toString(e.getStackTrace()));
             return;
         }
         while (logStringList.size() > 100) logStringList.remove(0);
