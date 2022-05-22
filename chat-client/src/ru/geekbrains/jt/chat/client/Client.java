@@ -105,12 +105,12 @@ public class Client extends JFrame implements ActionListener, Thread.UncaughtExc
                 panelBottom.setVisible(true);
                 panelTop.setVisible(false);
                 isRegistration = false;
+                putLog("Для смены ника/пароля отправьте сообщение\nSETNICK:новое_имя\nSETPSWD:новый_пароль");
                 break;
             case Messages.AUTH_ACCEPT:
                 setTitle(TITLE + " logged in as: " + arr[1]);
                 isLogin = true;
-                loadLogfromHostory();
-                putLog("Для смены ника/пароля отправьте сообщение\nSETNICK:новое_имя\nSETPSWD:новый_пароль");
+                loadLogFromHostory();
                 nickName = arr[1];
 
                 break;
@@ -198,7 +198,7 @@ public class Client extends JFrame implements ActionListener, Thread.UncaughtExc
         }
     }
 
-    private void loadLogfromHostory() {
+    private void loadLogFromHostory() {
         ArrayList<String> logStringList = new ArrayList<>();
         String line = "";
         try (
@@ -207,11 +207,13 @@ public class Client extends JFrame implements ActionListener, Thread.UncaughtExc
                 logStringList.add(line);
             }
         } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
+            return;
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            System.out.println("IO-error:"+e.getMessage()+"\n"+ Arrays.toString(e.getStackTrace()));
+            return;
         }
         while (logStringList.size() > 100) logStringList.remove(0);
+        log.setText("");
         for (String logline : logStringList) {
             log.append(logline + "\n");
         }
@@ -263,6 +265,7 @@ public class Client extends JFrame implements ActionListener, Thread.UncaughtExc
         } else if (src == btnLogin) {
             connect();
         } else if (src == btnDisconnect) {
+            log.setText("");
             socketThread.close();
         } else if (src == btnRegister) {
             isRegistration = true;
