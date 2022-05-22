@@ -208,6 +208,7 @@ public class Client extends JFrame implements ActionListener, Thread.UncaughtExc
         });
     }
 
+
     private void showException(Thread t, Throwable e) {
         if (!shownIoErrors) return;
         String msg;
