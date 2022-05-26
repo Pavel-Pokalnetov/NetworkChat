@@ -11,11 +11,14 @@ import java.net.Socket;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Vector;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class ChatServer implements ServerSocketThreadListener, SocketThreadListener {
     private final int SERVER_SOCKET_TIMEOUT = 2000;
     private final DateFormat DATE_FORMAT = new SimpleDateFormat("HH:mm:ss: ");
     private Vector<SocketThread> clients = new Vector<>();
+    ExecutorService threadPoolService;
 
     int counter = 0;
     ServerSocketThread server;
@@ -37,6 +40,7 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
         if (server == null || !server.isAlive()) {
             putLog("Server is not running");
         } else {
+            this.threadPoolService.shutdownNow();
             server.interrupt();
         }
     }
@@ -56,6 +60,7 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
     public void onServerStart(ServerSocketThread thread) {
         putLog("Server thread started");
         SqlClient.connect();
+        this.threadPoolService = Executors.newCachedThreadPool();
     }
 
     @Override
@@ -81,7 +86,7 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
     public void onSocketAccepted(ServerSocketThread t, ServerSocket s, Socket client) {
         putLog("Client connected");
         String name = "SocketThread" + client.getInetAddress() + ": " + client.getPort();
-        new ClientThread(this, name, client);
+       threadPoolService.execute(new ClientThread(this, name, client));
     }
 
     @Override
