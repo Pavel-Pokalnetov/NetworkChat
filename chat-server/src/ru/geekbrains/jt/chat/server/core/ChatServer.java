@@ -66,6 +66,7 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
     @Override
     public void onServerStop(ServerSocketThread thread) {
         putLog("Server thread stopped");
+        //this.threadPoolService.shutdownNow();
         SqlClient.disconnect();
         for (int i = 0; i < clients.size(); i++) {
             clients.get(i).close();
