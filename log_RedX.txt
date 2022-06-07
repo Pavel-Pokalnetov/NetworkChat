@@ -1,2 +1,0 @@
-17:29:16: :Server > MyBestNick! connected.
-17:30:28: :Server > MyBestNick! connected.
