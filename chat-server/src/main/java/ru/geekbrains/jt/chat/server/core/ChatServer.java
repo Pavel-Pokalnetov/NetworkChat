@@ -1,5 +1,7 @@
 package ru.geekbrains.jt.chat.server.core;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import ru.geekbrains.jt.chat.common.Messages;
 import ru.geekbrains.jt.network.ServerSocketThread;
 import ru.geekbrains.jt.network.ServerSocketThreadListener;
@@ -19,11 +21,10 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
     private final DateFormat DATE_FORMAT = new SimpleDateFormat("HH:mm:ss: ");
     private Vector<SocketThread> clients = new Vector<>();
     ExecutorService threadPoolService;
-
-    int counter = 0;
+    private static final Logger logger = LogManager.getLogger();
     ServerSocketThread server;
     ChatServerListener listener;
-
+    private int counter = 0;
     public ChatServer(ChatServerListener listener) {
         this.listener = listener;
     }
@@ -50,6 +51,7 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
                 Thread.currentThread().getName() +
                 ": " + msg;
         listener.onChatServerMessage(msg);
+        logger.info(msg);
 
     }
 
@@ -158,8 +160,10 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
         if (SqlClient.setUserPassword(login, password)) {
             client.sendMessage(Messages.getSrvUnicast("пароль успешно изменен"));
             client.sendMessage(Messages.getSrvUnicast("переподключитесь к серверу с новым паролем"));
+            logger.info(String.format("Пользователь login:%s сменил пароль",login));
         } else {
             client.sendMessage(Messages.getSrvUnicast("не удалось изменить пароль"));
+            logger.error(String.format("ошибка изменения пароля login:%s",login));
         }
     }
 
@@ -168,8 +172,10 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
         if (SqlClient.setUserNickName(login, nickname)) {
             client.sendMessage(Messages.getSrvUnicast("ник успешно изменен"));
             client.sendMessage(Messages.getSrvUnicast("переподключитесь к серверу"));
+            logger.info(String.format("Смена никнейма login:%s newnickname:%s",login,nickname);
         } else {
             client.sendMessage(Messages.getSrvUnicast("не удалось изменить ник"));
+            logger.error("Ошибка смены никнейма login:%s"+login);
         }
     }
 
@@ -178,6 +184,7 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
             ClientThread client = (ClientThread) clients.get(i);
             if (!client.isAuthorized()) continue;
             client.sendMessage(msg);
+
         }
     }
 
@@ -198,14 +205,17 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
             //регистрация нового клиента
             String nickname = arr[1];
             String login = arr[2];
+            logger.info(String.format("регистрация нового пользователя: login:%s nickname:%s",login,nickname));
             if (SqlClient.checkLogin(login)) {
                 //login уже занят
                 client.sendMessage(Messages.getSrvUnicast("Этот логин занят"));
+                logger.error(String.format("ошибка регистрации, login:%s занят",login));
                 return;
             }
             String password = arr[3];
             if (password.equals("")) {
                 client.sendMessage(Messages.getSrvUnicast("Пароль не может быть пустым"));
+                logger.error(String.format("ошибка регистрации, пустой пароль, login:%s занят",login));
                 return;
             }
             if (SqlClient.addLogin(nickname, login, password)) {
@@ -215,11 +225,13 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
                 client.sendMessage(Messages.getSrvUnicast("Вы зарегистрированы!"));
                 client.sendMessage(Messages.getSrvUnicast("логин: " + login));
                 client.sendMessage(Messages.getSrvUnicast("пароль: " + password));
-                client.sendMessage(Messages.getSrvUnicast("Ва можете авторизоваться под новым логином"));
+                client.sendMessage(Messages.getSrvUnicast("Вы можете авторизоваться под новым логином"));
                 client.reconnect();
+                logger.info(String.format("Успешная регистрация нового пользователя: login:%s",login));
                 return;
             } else {
                 client.sendMessage(Messages.getSrvUnicast("Регистрация не удалась"));
+                logger.error(String.format("Ошибка регистрации нового пользователя login:%s",login));
                 return;
             }
         }
@@ -227,6 +239,7 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
         if (arr.length != 3 || !arr[0].equals(Messages.AUTH_REQUEST)) {
             //косячный мессадж
             client.msgFormatError(msg);
+            logger.error("неверный формат сообщения: "+msg);
             return;
         }
 
@@ -243,6 +256,7 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
             client.authAccept(nickname);
             if (oldClient == null) {
                 sendToAllAuthorized(Messages.getTypeBroadcast("Server", nickname + " connected."));
+                logger.trace(nickname + " connected");
             } else {
                 oldClient.reconnect();
                 clients.remove(oldClient);
