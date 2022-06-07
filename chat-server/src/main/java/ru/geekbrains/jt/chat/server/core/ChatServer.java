@@ -12,6 +12,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Vector;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -267,8 +268,7 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
 
     @Override
     public synchronized void onSocketException(SocketThread t, Throwable e) {
-        //e.printStackTrace();
-        logger.error(e.getMessage());
+        logger.debug(t.getName() + " " +e.getMessage());
     }
 
     private String getUsers() {
