@@ -50,6 +50,7 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
                 Thread.currentThread().getName() +
                 ": " + msg;
         listener.onChatServerMessage(msg);
+
     }
 
     /**
