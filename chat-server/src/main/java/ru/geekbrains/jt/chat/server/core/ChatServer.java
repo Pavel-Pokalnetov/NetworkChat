@@ -172,7 +172,7 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
         if (SqlClient.setUserNickName(login, nickname)) {
             client.sendMessage(Messages.getSrvUnicast("ник успешно изменен"));
             client.sendMessage(Messages.getSrvUnicast("переподключитесь к серверу"));
-            logger.info(String.format("Смена никнейма login:%s newnickname:%s",login,nickname);
+            logger.info(String.format("Смена никнейма login:%s newnickname:%s",login,nickname));
         } else {
             client.sendMessage(Messages.getSrvUnicast("не удалось изменить ник"));
             logger.error("Ошибка смены никнейма login:%s"+login);
@@ -267,7 +267,8 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
 
     @Override
     public synchronized void onSocketException(SocketThread t, Throwable e) {
-        e.printStackTrace();
+        //e.printStackTrace();
+        logger.error(e.getMessage());
     }
 
     private String getUsers() {
